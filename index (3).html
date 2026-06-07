@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나만의 영상 가사 만들기 | AION CLASS</title>
+<style>
+  :root {
+    --dark-green: #1a2e1a;
+    --mid-green: #3d8b37;
+    --light-green: #6dba66;
+    --pale-green: #E1F5EE;
+    --bg: #f5f3ee;
+    --card-bg: #ffffff;
+    --text: #1a1a1a;
+    --hint: #999999;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 16px; }
+
+  .header { background: var(--dark-green); color: white; text-align: center; padding: 16px; }
+  .header .brand { font-size: 12px; letter-spacing: 2px; opacity: 0.7; margin-bottom: 4px; }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+
+  .flow-bar { background: var(--mid-green); color: white; text-align: center; padding: 10px 16px; font-size: 12px; }
+
+  .progress-wrap { max-width: 600px; margin: 0 auto; padding: 16px 16px 0; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--hint); margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: #ddd; border-radius: 3px; }
+  .progress-fill { height: 100%; background: var(--mid-green); border-radius: 3px; transition: width 0.4s; }
+
+  .tabs { max-width: 600px; margin: 12px auto 0; padding: 0 16px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab { flex: 1; min-width: 40px; padding: 8px 4px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 11px; text-align: center; cursor: pointer; color: var(--hint); transition: all 0.2s; }
+  .tab.active { background: var(--mid-green); color: white; border-color: var(--mid-green); font-weight: 700; }
+  .tab.done { background: var(--pale-green); color: var(--mid-green); border-color: var(--light-green); }
+
+  .main { max-width: 600px; margin: 0 auto; padding: 16px; }
+  .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .step-badge { display: inline-block; background: var(--mid-green); color: white; font-size: 11px; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; }
+  .card h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .card .desc { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.6; }
+
+  .q-block { margin-bottom: 20px; }
+  .q-label { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .q-hint { font-size: 12px; color: var(--hint); margin-bottom: 8px; line-height: 1.5; }
+  textarea { width: 100%; min-height: 80px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; font-family: inherit; resize: vertical; }
+  textarea:focus { outline: none; border-color: var(--mid-green); }
+  input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; font-family: inherit; }
+  input[type="text"]:focus { outline: none; border-color: var(--mid-green); }
+
+  .chip-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .chip { padding: 12px 8px; background: white; border: 1.5px solid #ddd; border-radius: 10px; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.15s; line-height: 1.5; }
+  .chip.selected { background: var(--pale-green); border-color: var(--mid-green); color: var(--mid-green); font-weight: 600; }
+  .chip-etc { margin-top: 8px; }
+  .chip-etc-input { display: none; margin-top: 6px; }
+  .chip-etc-input.show { display: block; }
+
+  /* 시점 선택 카드 - 특별 강조 */
+  .viewpoint-group { display: flex; flex-direction: column; gap: 10px; }
+  .viewpoint-chip { padding: 14px 16px; background: white; border: 2px solid #ddd; border-radius: 12px; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .viewpoint-chip .vp-title { font-weight: 700; margin-bottom: 3px; }
+  .viewpoint-chip .vp-example { font-size: 12px; color: var(--hint); }
+  .viewpoint-chip.selected { background: var(--pale-green); border-color: var(--mid-green); }
+  .viewpoint-chip.selected .vp-title { color: var(--mid-green); }
+
+  .btn { width: 100%; min-height: 52px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
+  .btn-primary { background: var(--mid-green); color: white; }
+  .btn-primary:active { background: var(--dark-green); }
+  .btn-secondary { background: white; color: var(--mid-green); border: 2px solid var(--mid-green); }
+  .btn-chatgpt { background: #10a37f; color: white; font-size: 15px; }
+  .btn-copy { background: var(--dark-green); color: white; font-size: 15px; }
+  .btn-back { background: #f0f0f0; color: #666; font-size: 14px; min-height: 44px; }
+
+  .prompt-box { background: #f8fdf6; border: 1.5px solid var(--light-green); border-radius: 12px; padding: 16px; font-size: 14px; line-height: 1.9; white-space: pre-wrap; word-break: break-all; margin-bottom: 16px; max-height: 340px; overflow-y: auto; }
+  .copy-toast { text-align: center; font-size: 13px; color: var(--mid-green); font-weight: 600; margin-bottom: 12px; display: none; }
+
+  .share-list { margin-top: 12px; }
+  .share-item { background: var(--pale-green); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+  .share-item strong { color: var(--dark-green); }
+
+  .curriculum { max-width: 600px; margin: 0 auto; padding: 0 16px 30px; }
+  .curriculum h3 { font-size: 14px; color: var(--hint); margin-bottom: 10px; }
+  .cur-list { display: flex; flex-direction: column; gap: 6px; }
+  .cur-item { background: white; border-radius: 10px; padding: 10px 14px; font-size: 13px; border-left: 3px solid #ddd; }
+  .cur-item.today { border-left-color: var(--mid-green); background: var(--pale-green); font-weight: 600; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">✦ AION CLASS ✦</div>
+  <h1>🎬 나만의 영상 가사 만들기</h1>
+  <p>내 이야기를 담은 특별한 영상 가사를 만들어요</p>
+</div>
+
+<div class="flow-bar">
+  ① 영상 시점 → ② 배경 → ③ 감정 & 기억 → ④ 핵심 표현 → ⑤ 음악 스타일 → ⑥ 완성!
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="stepLabel">1단계 / 5단계</span>
+    <span id="stepPct">20%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab1" onclick="goStep(1)">1<br>시점</div>
+  <div class="tab" id="tab2" onclick="goStep(2)">2<br>배경</div>
+  <div class="tab" id="tab3" onclick="goStep(3)">3<br>기억</div>
+  <div class="tab" id="tab4" onclick="goStep(4)">4<br>표현</div>
+  <div class="tab" id="tab5" onclick="goStep(5)">5<br>음악</div>
+  <div class="tab" id="tab6" onclick="goStep(6)">6<br>완성!</div>
+</div>
+
+<div class="main">
+
+  <!-- STEP 1: 시점 선택 -->
+  <div id="step1">
+    <div class="card">
+      <div class="step-badge">STEP 1</div>
+      <h2>🎥 이 영상은 누구의 이야기인가요?</h2>
+      <p class="desc">영상의 시점을 먼저 정해요.<br>내가 나를 보는지, 내가 누군가를 그리워하는지에 따라 가사가 달라져요.</p>
+
+      <div class="q-block">
+        <div class="viewpoint-group" id="viewpointGroup">
+          <div class="viewpoint-chip" onclick="selectViewpoint(this, 'self')">
+            <div class="vp-title">👤 나의 이야기</div>
+            <div class="vp-example">내가 살아온 인생, 내 추억, 나의 감정을 담아요</div>
+          </div>
+          <div class="viewpoint-chip" onclick="selectViewpoint(this, 'parent')">
+            <div class="vp-title">👩 엄마 / 아빠 이야기</div>
+            <div class="vp-example">내가 부모님을 그리워하며 바라보는 시점</div>
+          </div>
+          <div class="viewpoint-chip" onclick="selectViewpoint(this, 'couple')">
+            <div class="vp-title">💑 우리 부부 이야기</div>
+            <div class="vp-example">함께 살아온 두 사람의 이야기</div>
+          </div>
+          <div class="viewpoint-chip" onclick="selectViewpoint(this, 'child')">
+            <div class="vp-title">👶 자녀 / 손자 이야기</div>
+            <div class="vp-example">내가 아이를 바라보며 느끼는 사랑과 감동</div>
+          </div>
+          <div class="viewpoint-chip" onclick="selectViewpoint(this, 'friend')">
+            <div class="vp-title">🤝 친구 / 지인 이야기</div>
+            <div class="vp-example">소중한 인연을 그리워하는 시점</div>
+          </div>
+          <div class="viewpoint-chip" onclick="selectViewpoint(this, 'etc')">
+            <div class="vp-title">✏️ 기타</div>
+            <div class="vp-example">위에 없는 다른 시점이 있어요</div>
+          </div>
+        </div>
+        <input type="text" id="viewpointEtc" class="hidden" placeholder="예: 고향 마을 이야기 / 반려동물 이야기" style="margin-top:10px;">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goStep(2)">다음 단계로 →</button>
+  </div>
+
+  <!-- STEP 2: 배경 -->
+  <div id="step2" class="hidden">
+    <div class="card">
+      <div class="step-badge">STEP 2</div>
+      <h2 id="step2Title">📍 배경을 알려주세요</h2>
+      <p class="desc" id="step2Desc">이야기의 시간과 장소를 떠올려보세요.</p>
+
+      <div class="q-block">
+        <div class="q-label" id="label_subject">① 이 영상의 주인공은 누구인가요?</div>
+        <div class="q-hint" id="hint_subject">예: 나 / 엄마 / 우리 부부 / 손자 민준이</div>
+        <input type="text" id="q_subject" placeholder="주인공을 적어주세요">
+      </div>
+
+      <div class="q-block">
+        <div class="q-label" id="label_era">② 어떤 시절이 배경인가요?</div>
+        <div class="q-hint" id="hint_era">예: 내가 어릴 때 70년대 / 신혼 시절 / 엄마가 젊었던 때</div>
+        <input type="text" id="q_era" placeholder="시절이나 나이를 적어주세요">
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">③ 어떤 장소가 떠오르나요?</div>
+        <div class="q-hint">예: 고향집 부엌 / 부산 바다 / 시골 논밭 / 우리 동네 골목</div>
+        <input type="text" id="q_place" placeholder="장소를 적어주세요">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goStep(3)">다음 단계로 →</button>
+    <button class="btn btn-back" onclick="goStep(1)">← 이전으로</button>
+  </div>
+
+  <!-- STEP 3: 감정 & 기억 -->
+  <div id="step3" class="hidden">
+    <div class="card">
+      <div class="step-badge">STEP 3</div>
+      <h2>💛 감정 & 기억</h2>
+      <p class="desc">가장 소중한 기억을 구체적으로 떠올려주세요.<br>구체적일수록 감동적인 가사가 나와요!</p>
+
+      <div class="q-block">
+        <div class="q-label" id="label_scene">④ 가장 기억에 남는 장면이나 순간은?</div>
+        <div class="q-hint" id="hint_scene">예: 새벽에 밥 짓던 엄마 모습 / 남편이 처음 손잡던 날</div>
+        <textarea id="q_scene" placeholder="그 장면을 자세히 적어주세요"></textarea>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">⑤ 그때 어떤 감정이었나요?</div>
+        <div class="q-hint">여러 개 선택 가능해요</div>
+        <div class="chip-group" id="chips_feeling">
+          <div class="chip" onclick="toggleChip(this)">💕 따뜻한</div>
+          <div class="chip" onclick="toggleChip(this)">🥺 그리운</div>
+          <div class="chip" onclick="toggleChip(this)">✨ 설레는</div>
+          <div class="chip" onclick="toggleChip(this)">😊 행복한</div>
+          <div class="chip" onclick="toggleChip(this)">😢 눈물나는</div>
+          <div class="chip" onclick="toggleChip(this)">🙏 감사한</div>
+          <div class="chip" onclick="toggleChip(this)">😄 신나는</div>
+          <div class="chip" onclick="toggleChip(this)">🌟 자랑스러운</div>
+        </div>
+        <div class="chip-etc">
+          <div class="chip" onclick="toggleEtc('etc_feeling', this)">✏️ 기타 (직접 입력)</div>
+          <input type="text" id="etc_feeling" class="chip-etc-input" placeholder="다른 감정을 적어주세요">
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">⑥ 지금 그 기억이 어떻게 느껴지나요?</div>
+        <div class="q-hint">예: 눈물이 난다 / 감사하다 / 다시 돌아가고 싶다 / 자랑스럽다</div>
+        <input type="text" id="q_now" placeholder="지금의 느낌을 적어주세요">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goStep(4)">다음 단계로 →</button>
+    <button class="btn btn-back" onclick="goStep(2)">← 이전으로</button>
+  </div>
+
+  <!-- STEP 4: 핵심 표현 -->
+  <div id="step4" class="hidden">
+    <div class="card">
+      <div class="step-badge">STEP 4</div>
+      <h2>✍️ 핵심 표현</h2>
+      <p class="desc">꼭 넣고 싶은 단어와 전하고 싶은 말을 적어주세요.</p>
+
+      <div class="q-block">
+        <div class="q-label">⑦ 꼭 넣고 싶은 단어나 물건이 있나요?</div>
+        <div class="q-hint">예: 된장찌개 / 봄비 / 손편지 / 자전거 / 빨간 내복 / 고무신</div>
+        <input type="text" id="q_keyword" placeholder="특별한 단어를 적어주세요">
+      </div>
+
+      <div class="q-block">
+        <div class="q-label" id="label_message">⑧ 누구에게 어떤 말을 전하고 싶나요?</div>
+        <div class="q-hint" id="hint_message">예: 엄마에게 "고마워요, 보고싶어요" / 나 자신에게 "잘 살았어"</div>
+        <textarea id="q_message" placeholder="전하고 싶은 말을 적어주세요"></textarea>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">⑨ 영상의 마지막을 장식할 문장은?</div>
+        <div class="q-hint">예: "그래도 행복했다" / "다시 태어나도 이 길을" / "사랑해, 엄마"</div>
+        <input type="text" id="q_ending" placeholder="마지막 문장을 적어주세요">
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">⑩ 이 영상의 제목을 지어주세요</div>
+        <div class="q-hint">예: 엄마의 된장찌개 / 봄날의 추억 / 나의 청춘 / 우리 둘이서</div>
+        <input type="text" id="q_title" placeholder="영상 제목을 적어주세요">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goStep(5)">다음 단계로 →</button>
+    <button class="btn btn-back" onclick="goStep(3)">← 이전으로</button>
+  </div>
+
+  <!-- STEP 5: 음악 스타일 -->
+  <div id="step5" class="hidden">
+    <div class="card">
+      <div class="step-badge">STEP 5</div>
+      <h2>🎵 음악 스타일</h2>
+      <p class="desc">어떤 음악이 어울릴지 골라주세요!</p>
+
+      <div class="q-block">
+        <div class="q-label">⑪ 음악 분위기를 선택해주세요</div>
+        <div class="chip-group" id="chips_mood">
+          <div class="chip" onclick="singleChip('chips_mood', this)">🌙 잔잔하고 서정적</div>
+          <div class="chip" onclick="singleChip('chips_mood', this)">🌸 따뜻하고 포근한</div>
+          <div class="chip" onclick="singleChip('chips_mood', this)">🎉 밝고 신나는</div>
+          <div class="chip" onclick="singleChip('chips_mood', this)">🎼 웅장하고 감동적</div>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">⑫ 음악 장르를 선택해주세요</div>
+        <div class="chip-group" id="chips_genre">
+          <div class="chip" onclick="singleChip('chips_genre', this)">🎹 발라드</div>
+          <div class="chip" onclick="singleChip('chips_genre', this)">🎤 트로트</div>
+          <div class="chip" onclick="singleChip('chips_genre', this)">🎸 포크/어쿠스틱</div>
+          <div class="chip" onclick="singleChip('chips_genre', this)">🎻 클래식/영화음악</div>
+        </div>
+        <div class="chip-etc">
+          <div class="chip" onclick="toggleEtc('etc_genre', this)">✏️ 기타 (직접 입력)</div>
+          <input type="text" id="etc_genre" class="chip-etc-input" placeholder="원하는 장르를 적어주세요">
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">⑬ 빠르기는 어떻게 할까요?</div>
+        <div class="chip-group" id="chips_tempo">
+          <div class="chip" onclick="singleChip('chips_tempo', this)">🐢 느리게</div>
+          <div class="chip" onclick="singleChip('chips_tempo', this)">🚶 보통</div>
+          <div class="chip" onclick="singleChip('chips_tempo', this)">🏃 빠르게</div>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label">✏️ 이름을 입력해주세요</div>
+        <input type="text" id="userName" placeholder="예: 홍길동">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="generatePrompt()">✨ 가사 프롬프트 완성!</button>
+    <button class="btn btn-back" onclick="goStep(4)">← 이전으로</button>
+  </div>
+
+  <!-- STEP 6: 결과 -->
+  <div id="step6" class="hidden">
+    <div class="card">
+      <div class="step-badge">STEP 6 — 완성!</div>
+      <h2>🎉 내 가사 프롬프트</h2>
+      <p class="desc">아래 프롬프트를 복사한 뒤 ChatGPT에 붙여넣으세요!</p>
+      <div class="prompt-box" id="promptResult"></div>
+      <div class="copy-toast" id="copyToast">✅ 복사 완료! ChatGPT에 붙여넣으세요.</div>
+      <button class="btn btn-copy" onclick="copyPrompt()">📋 프롬프트 복사하기</button>
+      <button class="btn btn-chatgpt" onclick="openChatGPT()">🤖 ChatGPT 열기</button>
+    </div>
+
+    <div class="card">
+      <div class="step-badge">우리 반 공유</div>
+      <h2>📢 영상 제목 함께 나눠요</h2>
+      <p class="desc">내 영상 제목을 친구들과 공유해요!</p>
+      <button class="btn btn-secondary" onclick="shareResult()">🙌 내 영상 제목 공유하기</button>
+      <div class="share-list" id="shareList"></div>
+    </div>
+
+    <button class="btn btn-back" onclick="goStep(5)">← 수정하기</button>
+    <button class="btn btn-secondary" onclick="printResult()">🖨️ PDF로 저장</button>
+  </div>
+
+</div>
+
+<!-- 커리큘럼 -->
+<div class="curriculum">
+  <h3>📚 커리큘럼 안내</h3>
+  <div class="cur-list">
+    <div class="cur-item">1차시: ChatGPT 첫 만남</div>
+    <div class="cur-item">2차시: AI 여행 계획</div>
+    <div class="cur-item">3차시: AI 그림 만들기</div>
+    <div class="cur-item">4차시: AI 사진 편집</div>
+    <div class="cur-item">5차시: AI 글쓰기</div>
+    <div class="cur-item">6차시: AI 생활 정보</div>
+    <div class="cur-item">7차시: AI 음악</div>
+    <div class="cur-item today">✅ 8차시 (오늘): 가사 & 그림 만들기</div>
+    <div class="cur-item">9차시: 음악 & 영상 완성</div>
+  </div>
+</div>
+
+<script>
+  let currentStep = 1;
+  let selectedViewpoint = 'self';
+  const shareItems = [];
+
+  // 시점별 힌트/라벨 설정
+  const viewpointConfig = {
+    self: {
+      subject: { label: '① 주인공은 나 자신인가요?', hint: '예: 나 / 젊은 시절의 나 / 30대의 나' },
+      era: { hint: '예: 내가 20대였던 70년대 / 신혼 시절 / 아이들 어릴 때' },
+      scene: { label: '④ 내 인생에서 가장 기억에 남는 장면은?', hint: '예: 첫 출근 날 / 아이 태어나던 날 / 고향 떠나던 날' },
+      message: { label: '⑧ 나 자신이나 소중한 사람에게 전하고 싶은 말은?', hint: '예: 나 자신에게 "잘 살았어, 고생했어" / 가족에게 "고마워"' },
+      promptIntro: '내가 살아온 인생 이야기를 담은'
+    },
+    parent: {
+      subject: { label: '① 추억하는 분은 누구인가요?', hint: '예: 엄마 / 아버지 / 어머니 / 할머니' },
+      era: { hint: '예: 내가 어릴 때 엄마 모습 / 엄마가 젊었던 70년대 / 아버지 일하시던 시절' },
+      scene: { label: '④ 가장 기억에 남는 부모님의 모습은?', hint: '예: 새벽에 밥 짓던 엄마 / 무거운 짐 지고 일하시던 아버지 / 늘 웃으시던 할머니' },
+      message: { label: '⑧ 부모님께 전하고 싶은 말은?', hint: '예: "고마워요, 보고싶어요" / "엄마 덕분에 잘 살았어요" / "사랑해요"' },
+      promptIntro: '내가 부모님을 그리워하며 바라보는 시점의'
+    },
+    couple: {
+      subject: { label: '① 주인공은 누구누구인가요?', hint: '예: 나와 남편 / 우리 부부 / 남편과 나' },
+      era: { hint: '예: 신혼 시절 / 아이 키우던 때 / 함께한 40년' },
+      scene: { label: '④ 둘이서 함께한 가장 기억에 남는 순간은?', hint: '예: 처음 손잡던 날 / 가난했지만 행복했던 신혼 / 함께 넘긴 어려움' },
+      message: { label: '⑧ 배우자에게 전하고 싶은 말은?', hint: '예: "고생했어요, 고마워요" / "당신이 있어 행복했어" / "함께여서 다행이야"' },
+      promptIntro: '우리 부부가 함께 살아온 이야기를 담은'
+    },
+    child: {
+      subject: { label: '① 주인공 아이는 누구인가요?', hint: '예: 아들 / 딸 / 손자 민준이 / 손녀 지은이' },
+      era: { hint: '예: 아이가 어릴 때 / 아이 첫 걸음마 때 / 지금 이 순간' },
+      scene: { label: '④ 아이에 대해 가장 기억에 남는 장면은?', hint: '예: 첫 걸음마 / 처음 엄마라고 부르던 날 / 학교 가던 첫날' },
+      message: { label: '⑧ 아이에게 전하고 싶은 말은?', hint: '예: "사랑한다, 네가 내 보물이야" / "건강하게 자라줘서 고마워" / "네가 있어 행복해"' },
+      promptIntro: '내가 사랑하는 아이를 바라보며 쓴'
+    },
+    friend: {
+      subject: { label: '① 그리운 친구나 지인은 누구인가요?', hint: '예: 오랜 친구 / 어릴 때 친구 / 함께 일했던 동료' },
+      era: { hint: '예: 학창 시절 / 직장 다니던 때 / 함께했던 그 시간' },
+      scene: { label: '④ 그 사람과의 가장 기억에 남는 순간은?', hint: '예: 함께 울고 웃던 날 / 힘들 때 곁에 있어준 순간 / 마지막으로 만났던 날' },
+      message: { label: '⑧ 그 사람에게 전하고 싶은 말은?', hint: '예: "보고싶어, 잘 지내고 있어?" / "네 덕분에 버텼어" / "고마웠어"' },
+      promptIntro: '소중한 인연을 그리워하며 쓴'
+    },
+    etc: {
+      subject: { label: '① 이 영상의 주인공은?', hint: '예: 고향 마을 / 반려견 뽀삐 / 우리 집' },
+      era: { hint: '예: 그 시절 / 어릴 때 / 지금 이 순간' },
+      scene: { label: '④ 가장 기억에 남는 장면은?', hint: '구체적으로 적어주세요' },
+      message: { label: '⑧ 전하고 싶은 말은?', hint: '마음에 있는 말을 자유롭게 적어주세요' },
+      promptIntro: '소중한 것을 담은'
+    }
+  };
+
+  function selectViewpoint(el, type) {
+    document.querySelectorAll('.viewpoint-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedViewpoint = type;
+    const etcInput = document.getElementById('viewpointEtc');
+    if (type === 'etc') {
+      etcInput.classList.remove('hidden');
+    } else {
+      etcInput.classList.add('hidden');
+    }
+  }
+
+  function updateStep2Labels() {
+    const cfg = viewpointConfig[selectedViewpoint] || viewpointConfig.self;
+    document.getElementById('label_subject').textContent = cfg.subject.label;
+    document.getElementById('hint_subject').textContent = cfg.subject.hint;
+    document.getElementById('hint_era').textContent = cfg.era.hint;
+    document.getElementById('label_scene').textContent = cfg.scene.label;
+    document.getElementById('hint_scene').textContent = cfg.scene.hint;
+    document.getElementById('label_message').textContent = cfg.message.label;
+    document.getElementById('hint_message').textContent = cfg.message.hint;
+  }
+
+  function goStep(n) {
+    if (n === 2) updateStep2Labels();
+    document.getElementById('step' + currentStep).classList.add('hidden');
+    document.getElementById('step' + n).classList.remove('hidden');
+
+    for (let i = 1; i <= 6; i++) {
+      const tab = document.getElementById('tab' + i);
+      if (!tab) continue;
+      tab.classList.remove('active', 'done');
+      if (i < n) tab.classList.add('done');
+      if (i === n) tab.classList.add('active');
+    }
+
+    const pct = Math.min(Math.round((n / 6) * 100), 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('stepPct').textContent = pct + '%';
+    document.getElementById('stepLabel').textContent = n <= 5 ? n + '단계 / 5단계' : '완성!';
+
+    currentStep = n;
+    window.scrollTo(0, 0);
+  }
+
+  function toggleChip(el) { el.classList.toggle('selected'); }
+
+  function singleChip(groupId, el) {
+    document.getElementById(groupId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleEtc(inputId, chipEl) {
+    chipEl.classList.toggle('selected');
+    const input = document.getElementById(inputId);
+    input.classList.toggle('show');
+  }
+
+  function getChips(groupId) {
+    const selected = [];
+    document.getElementById(groupId).querySelectorAll('.chip.selected').forEach(c => {
+      selected.push(c.textContent.trim());
+    });
+    return selected.join(', ');
+  }
+
+  function generatePrompt() {
+    const cfg = viewpointConfig[selectedViewpoint] || viewpointConfig.self;
+    const subject = document.getElementById('q_subject').value || '주인공';
+    const era = document.getElementById('q_era').value || '';
+    const place = document.getElementById('q_place').value || '';
+    const scene = document.getElementById('q_scene').value || '';
+    const feelingChips = getChips('chips_feeling');
+    const feelingEtc = document.getElementById('etc_feeling').value;
+    const feeling = [feelingChips, feelingEtc].filter(Boolean).join(', ') || '';
+    const nowFeel = document.getElementById('q_now').value || '';
+    const keyword = document.getElementById('q_keyword').value || '';
+    const message = document.getElementById('q_message').value || '';
+    const ending = document.getElementById('q_ending').value || '';
+    const title = document.getElementById('q_title').value || '나의 이야기';
+    const mood = getChips('chips_mood') || '';
+    const genreChip = getChips('chips_genre');
+    const genreEtc = document.getElementById('etc_genre').value;
+    const genre = genreChip || genreEtc || '발라드';
+    const tempo = getChips('chips_tempo') || '보통';
+
+    const prompt = `아래 내용을 바탕으로 Suno AI에 넣을 가사를 만들어줘.
+
+📌 영상 제목: "${title}"
+📌 영상 시점: ${cfg.promptIntro} 가사야.
+
+[이야기 배경]
+• 주인공: ${subject}
+• 시절/배경: ${era}
+• 장소: ${place}
+
+[기억과 감정]
+• 가장 기억에 남는 장면: ${scene}
+• 그때 감정: ${feeling}
+• 지금 이 기억이 느껴지는 감정: ${nowFeel}
+
+[꼭 담고 싶은 표현]
+• 특별한 단어/소재: ${keyword}
+• 전하고 싶은 말: ${message}
+• 마지막 문장: "${ending}"
+
+[음악 스타일]
+• 분위기: ${mood}
+• 장르: ${genre}
+• 빠르기: ${tempo}
+
+[가사 조건]
+• [Intro] [Verse] [Chorus] [Bridge] [Verse] [Chorus] [Outro] 구조로 나눠줘
+• 전체 28~32줄 (3분 이내 길이)
+• [Bridge]는 감정이 가장 고조되는 부분으로, 4줄 이내로 써줘
+• [Outro]는 마지막 문장 "${ending}"을 꼭 넣어서 마무리해줘
+• 쉽고 감동적인 한국어로 써줘
+• 원문의 감성과 표현을 최대한 살려줘`;
+
+    document.getElementById('promptResult').textContent = prompt;
+    goStep(6);
+  }
+
+  function copyPrompt() {
+    const text = document.getElementById('promptResult').textContent;
+
+    // 방법 1: clipboard API (HTTPS 환경)
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(showToast).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    // 방법 2: textarea + execCommand (모든 환경)
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '-9999px';
+    ta.setAttribute('readonly', '');
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    try {
+      const ok = document.execCommand('copy');
+      if (ok) {
+        showToast();
+      } else {
+        showManualCopy();
+      }
+    } catch(e) {
+      showManualCopy();
+    }
+    document.body.removeChild(ta);
+  }
+
+  function showManualCopy() {
+    // 방법 3: 직접 선택 안내
+    const box = document.getElementById('promptResult');
+    const range = document.createRange();
+    range.selectNodeContents(box);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    const t = document.getElementById('copyToast');
+    t.textContent = '📌 텍스트가 선택됐어요! 길게 눌러 복사하세요.';
+    t.style.display = 'block';
+    setTimeout(() => {
+      t.style.display = 'none';
+      t.textContent = '✅ 복사 완료! ChatGPT에 붙여넣으세요.';
+    }, 4000);
+  }
+
+  function showToast() {
+    const t = document.getElementById('copyToast');
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 2500);
+  }
+
+  function openChatGPT() {
+    copyPrompt();
+    setTimeout(() => { window.open('https://chat.openai.com', '_blank'); }, 600);
+  }
+
+  function shareResult() {
+    const name = document.getElementById('userName').value || '익명';
+    const title = document.getElementById('q_title').value || '나의 이야기';
+    shareItems.push({ name, title });
+    const list = document.getElementById('shareList');
+    list.innerHTML = shareItems.map(item =>
+      `<div class="share-item"><strong>${item.name}</strong> — 🎬 "${item.title}"</div>`
+    ).join('');
+  }
+
+  function printResult() {
+    const content = document.getElementById('promptResult').textContent;
+    const win = window.open('', '_blank');
+    win.document.write(`<html><head><title>나의 가사 프롬프트</title>
+    <style>body{font-family:'Noto Sans KR',sans-serif;padding:30px;font-size:15px;line-height:2;white-space:pre-wrap;}
+    h2{margin-bottom:20px;color:#1a2e1a;}</style></head>
+    <body><h2>🎬 나의 가사 프롬프트</h2>${content}</body></html>`);
+    win.print();
+  }
+</script>
+</body>
+</html>
